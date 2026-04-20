@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>ClassicModels Analytics Platform</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Bricolage+Grotesque:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0d0f14;--bg2:#13161e;--bg3:#1a1d28;--bg4:#222638;
+  --border:#2a2f45;--border2:#363c58;
+  --text:#e8eaf2;--text2:#9aa0bc;--text3:#5c6285;
+  --accent:#4f7cff;--accent2:#7c5cff;--green:#2ee8a0;--amber:#ffb84d;--red:#ff5c7a;
+  --font:'Bricolage Grotesque',sans-serif;--mono:'DM Mono',monospace;
+}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:14px;min-height:100vh}
+#app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+.topbar{display:flex;align-items:center;gap:0;padding:0 16px;background:var(--bg2);border-bottom:1px solid var(--border);height:48px;flex-shrink:0}
+.logo{font-weight:600;font-size:15px;color:var(--accent);margin-right:24px;font-family:var(--mono);white-space:nowrap}
+.logo span{color:var(--accent2)}
+.nav{display:flex;gap:2px;flex:1}
+.nav-btn{padding:6px 12px;border:none;background:transparent;color:var(--text2);cursor:pointer;font-family:var(--font);font-size:13px;border-radius:6px;transition:all .15s;white-space:nowrap}
+.nav-btn:hover{background:var(--bg3);color:var(--text)}
+.nav-btn.active{background:var(--bg3);color:var(--accent);font-weight:500}
+.content{flex:1;overflow:hidden;display:flex;flex-direction:column}
+.page{display:none;flex:1;overflow-y:auto;padding:16px}
+.page.active{display:flex;flex-direction:column;gap:12px}
+
+.kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.kpi{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.kpi-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+.kpi-val{font-size:22px;font-weight:600;font-family:var(--mono)}
+.kpi-sub{font-size:11px;margin-top:4px}
+.kpi.blue .kpi-val{color:var(--accent)} .kpi.green .kpi-val{color:var(--green)} .kpi.amber .kpi-val{color:var(--amber)} .kpi.red .kpi-val{color:var(--red)}
+
+.charts-row{display:grid;grid-template-columns:1.6fr 1fr;gap:10px}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px}
+.card-title{font-size:12px;font-weight:500;color:var(--text2);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px}
+.chart-wrap{position:relative;width:100%;height:200px}
+
+.search-bar{display:flex;gap:8px;align-items:center}
+.search-bar input,select{background:var(--bg2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-family:var(--font);font-size:13px;outline:none;transition:border .15s}
+.search-bar input{flex:1}
+.search-bar input:focus,select:focus{border-color:var(--accent)}
+.search-bar select{background:var(--bg2);color:var(--text2)}
+.btn{background:var(--accent);border:none;color:#fff;padding:8px 16px;border-radius:8px;cursor:pointer;font-family:var(--font);font-size:13px;font-weight:500;transition:opacity .15s;white-space:nowrap}
+.btn:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--border2);color:var(--text2)}
+.btn.outline:hover{border-color:var(--accent);color:var(--accent)}
+
+.table-wrap{overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+th{padding:10px 12px;text-align:left;color:var(--text3);font-weight:500;font-family:var(--mono);font-size:11px;letter-spacing:.04em;border-bottom:1px solid var(--border);background:var(--bg3);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--border);color:var(--text);white-space:nowrap}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:var(--bg3)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:500}
+.badge.green{background:rgba(46,232,160,.12);color:var(--green)}
+.badge.amber{background:rgba(255,184,77,.12);color:var(--amber)}
+.badge.red{background:rgba(255,92,122,.12);color:var(--red)}
+.badge.blue{background:rgba(79,124,255,.12);color:var(--accent)}
+
+.pivot-controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.pivot-controls label{font-size:12px;color:var(--text3)}
+.pivot-controls select{font-size:12px;padding:6px 10px}
+
+.pivot-wrap{overflow-x:auto;background:var(--bg2);border:1px solid var(--border);border-radius:10px}
+.pivot-wrap table th{background:var(--bg4);color:var(--accent);font-family:var(--mono)}
+.pivot-wrap table th.col-head{color:var(--text2)}
+.pivot-total{font-weight:600;font-family:var(--mono);color:var(--amber)}
+
+.chat-container{display:flex;flex-direction:column;flex:1;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:10px;overflow:hidden;min-height:460px}
+.chat-messages{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;max-height:420px}
+.msg{display:flex;gap:10px;align-items:flex-start}
+.msg.user{flex-direction:row-reverse}
+.msg-avatar{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0}
+.msg.assistant .msg-avatar{background:var(--bg4);color:var(--accent)}
+.msg.user .msg-avatar{background:var(--accent);color:#fff}
+.msg-bubble{max-width:80%;background:var(--bg3);border-radius:8px;padding:10px 12px;font-size:13px;line-height:1.5;color:var(--text)}
+.msg.user .msg-bubble{background:var(--accent);color:#fff}
+.chat-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid var(--border)}
+.chat-input-row input{flex:1;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-family:var(--font);font-size:13px;outline:none}
+.chat-input-row input:focus{border-color:var(--accent)}
+.typing-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:var(--text3);animation:blink 1.2s infinite}
+.typing-dot:nth-child(2){animation-delay:.2s} .typing-dot:nth-child(3){animation-delay:.4s}
+@keyframes blink{0%,80%,100%{opacity:.3}40%{opacity:1}}
+
+.stat-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.chart-tabs{display:flex;gap:4px;margin-bottom:10px}
+.chart-tab{padding:4px 10px;border:1px solid var(--border);border-radius:6px;background:transparent;color:var(--text3);cursor:pointer;font-size:12px;font-family:var(--font)}
+.chart-tab.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+
+.pagination{display:flex;align-items:center;gap:8px;padding:8px 0;font-size:12px;color:var(--text3)}
+.page-btn{background:var(--bg2);border:1px solid var(--border);color:var(--text2);padding:4px 10px;border-radius:6px;cursor:pointer;font-size:12px;font-family:var(--font)}
+.page-btn:hover{border-color:var(--accent);color:var(--accent)}
+.page-btn:disabled{opacity:.4;cursor:default}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="topbar">
+  <div class="logo">Classic<span>Models</span></div>
+  <div class="nav">
+    <button class="nav-btn active" onclick="showPage('dashboard',this)">Dashboard</button>
+    <button class="nav-btn" onclick="showPage('search',this)">Tìm kiếm</button>
+    <button class="nav-btn" onclick="showPage('stats',this)">Thống kê</button>
+    <button class="nav-btn" onclick="showPage('pivot',this)">Pivot</button>
+    <button class="nav-btn" onclick="showPage('chat',this)">Chatbot AI</button>
+  </div>
+</div>
+<div class="content">
+
+<div id="page-dashboard" class="page active">
+  <div class="kpi-row">
+    <div class="kpi blue"><div class="kpi-label">Tổng doanh thu</div><div class="kpi-val" id="kpi-rev">$0</div><div class="kpi-sub" style="color:var(--green)">↑ 12.4% so với năm ngoái</div></div>
+    <div class="kpi green"><div class="kpi-label">Số đơn hàng</div><div class="kpi-val" id="kpi-ord">0</div><div class="kpi-sub" style="color:var(--text3)">326 đã giao</div></div>
+    <div class="kpi amber"><div class="kpi-label">Khách hàng</div><div class="kpi-val" id="kpi-cus">0</div><div class="kpi-sub" style="color:var(--text3)">21 quốc gia</div></div>
+    <div class="kpi red"><div class="kpi-label">Sản phẩm</div><div class="kpi-val" id="kpi-pro">0</div><div class="kpi-sub" style="color:var(--text3)">7 dòng hàng</div></div>
+  </div>
+  <div class="charts-row">
+    <div class="card"><div class="card-title">Doanh thu theo tháng (2004)</div><div class="chart-wrap"><canvas id="chart-monthly" aria-label="Doanh thu theo tháng">Biểu đồ doanh thu</canvas></div></div>
+    <div class="card"><div class="card-title">Doanh thu theo dòng sản phẩm</div><div class="chart-wrap"><canvas id="chart-pline" aria-label="Theo dòng sản phẩm">Biểu đồ dòng sản phẩm</canvas></div></div>
+  </div>
+  <div class="charts-row">
+    <div class="card"><div class="card-title">Top 8 khách hàng</div><div class="chart-wrap" style="height:180px"><canvas id="chart-topcust" aria-label="Top khách hàng">Biểu đồ khách hàng</canvas></div></div>
+    <div class="card"><div class="card-title">Trạng thái đơn hàng</div><div class="chart-wrap" style="height:180px"><canvas id="chart-status" aria-label="Trạng thái đơn hàng">Biểu đồ trạng thái</canvas></div></div>
+  </div>
+</div>
+
+<div id="page-search" class="page">
+  <div class="search-bar">
+    <input type="text" id="search-input" placeholder="Tìm kiếm khách hàng, đơn hàng, sản phẩm..." oninput="runSearch()"/>
+    <select id="search-type" onchange="runSearch()">
+      <option value="all">Tất cả</option>
+      <option value="customers">Khách hàng</option>
+      <option value="orders">Đơn hàng</option>
+      <option value="products">Sản phẩm</option>
+    </select>
+    <select id="search-country" onchange="runSearch()">
+      <option value="">Tất cả quốc gia</option>
+    </select>
+  </div>
+  <div id="search-results-info" style="font-size:12px;color:var(--text3)"></div>
+  <div class="table-wrap"><table id="search-table"><thead id="search-head"></thead><tbody id="search-body"></tbody></table></div>
+  <div class="pagination"><button class="page-btn" id="prev-btn" onclick="changePage(-1)">← Trước</button><span id="page-info"></span><button class="page-btn" id="next-btn" onclick="changePage(1)">Tiếp →</button></div>
+</div>
+
+<div id="page-stats" class="page">
+  <div class="pivot-controls">
+    <label>Xem theo:</label>
+    <div class="chart-tabs">
+      <button class="chart-tab active" onclick="setStatTab('time',this)">Thời gian</button>
+      <button class="chart-tab" onclick="setStatTab('customer',this)">Khách hàng</button>
+      <button class="chart-tab" onclick="setStatTab('product',this)">Mặt hàng</button>
+      <button class="chart-tab" onclick="setStatTab('country',this)">Quốc gia</button>
+    </div>
+    <select id="stat-year" onchange="renderStats()"><option value="all">Tất cả năm</option><option value="2003">2003</option><option value="2004" selected>2004</option><option value="2005">2005</option></select>
+    <select id="stat-metric" onchange="renderStats()"><option value="revenue">Doanh thu</option><option value="quantity">Số lượng</option><option value="orders">Số đơn</option></select>
+  </div>
+  <div class="stat-row">
+    <div class="card"><div class="card-title" id="stat-chart1-title">Biểu đồ chính</div><div class="chart-wrap" style="height:220px"><canvas id="stat-chart1" aria-label="Biểu đồ thống kê">Biểu đồ thống kê</canvas></div></div>
+    <div class="card"><div class="card-title" id="stat-chart2-title">Phân tích phụ</div><div class="chart-wrap" style="height:220px"><canvas id="stat-chart2" aria-label="Biểu đồ phân tích">Biểu đồ phân tích</canvas></div></div>
+  </div>
+  <div class="table-wrap"><table><thead id="stat-table-head"></thead><tbody id="stat-table-body"></tbody></table></div>
+</div>
+
+<div id="page-pivot" class="page">
+  <div class="pivot-controls">
+    <label>Hàng:</label>
+    <select id="pivot-row" onchange="renderPivot()"><option value="productLine">Dòng sản phẩm</option><option value="country">Quốc gia</option><option value="year">Năm</option><option value="status">Trạng thái</option></select>
+    <label>Cột:</label>
+    <select id="pivot-col" onchange="renderPivot()"><option value="year">Năm</option><option value="productLine">Dòng sản phẩm</option><option value="country">Quốc gia</option><option value="status">Trạng thái</option></select>
+    <label>Giá trị:</label>
+    <select id="pivot-val" onchange="renderPivot()"><option value="revenue">Doanh thu ($)</option><option value="quantity">Số lượng</option><option value="orders">Số đơn hàng</option></select>
+    <button class="btn outline" onclick="exportPivot()">Xuất CSV</button>
+  </div>
+  <div class="pivot-wrap" id="pivot-container"></div>
+</div>
+
+<div id="page-chat" class="page">
+  <div class="chat-container">
+    <div class="chat-messages" id="chat-messages">
+      <div class="msg assistant">
+        <div class="msg-avatar">AI</div>
+        <div class="msg-bubble">Xin chào! Tôi là trợ lý phân tích dữ liệu ClassicModels. Bạn có thể hỏi tôi về:<br><br>
+        • Doanh thu, đơn hàng, khách hàng<br>
+        • Sản phẩm bán chạy nhất<br>
+        • Thống kê theo thời gian, quốc gia<br>
+        • So sánh hiệu quả kinh doanh<br><br>
+        Bạn muốn biết gì về dữ liệu ClassicModels?</div>
+      </div>
+    </div>
+    <div class="chat-input-row">
+      <input type="text" id="chat-input" placeholder="Hỏi về dữ liệu ClassicModels..." onkeydown="if(event.key==='Enter')sendChat()"/>
+      <button class="btn" onclick="sendChat()">Gửi</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px">
+    <button class="btn outline" onclick="quickChat('Khách hàng nào có doanh thu cao nhất?')">Top khách hàng</button>
+    <button class="btn outline" onclick="quickChat('Sản phẩm nào bán chạy nhất?')">Sản phẩm hot</button>
+    <button class="btn outline" onclick="quickChat('Phân tích doanh thu theo quý 2004')">Doanh thu Q 2004</button>
+    <button class="btn outline" onclick="quickChat('Tình trạng tồn kho các dòng sản phẩm như thế nào?')">Tồn kho</button>
+  </div>
+</div>
+
+</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+const CUSTOMERS=[
+  {id:103,name:'Atelier graphique',country:'France',city:'Nantes',creditLimit:21000,rep:'Gerard Hernandez'},
+  {id:112,name:'Signal Gift Stores',country:'USA',city:'Las Vegas',creditLimit:71800,rep:'Julie Firrelli'},
+  {id:114,name:'Australian Collectors Co.',country:'Australia',city:'Melbourne',creditLimit:117300,rep:'Peter Ferguson'},
+  {id:119,name:'La Rochelle Gifts',country:'France',city:'Nantes',creditLimit:118200,rep:'Gerard Hernandez'},
+  {id:121,name:'Baane Mini Imports',country:'Norway',city:'Stavern',creditLimit:81700,rep:'Larry Bott'},
+  {id:124,name:'Mini Gifts Distributors Ltd.',country:'USA',city:'San Rafael',creditLimit:210500,rep:'Julie Firrelli'},
+  {id:125,name:'Havel & Zbyszek Co',country:'Poland',city:'Warsaw',creditLimit:0,rep:'Barry Jones'},
+  {id:128,name:'Blauer See Auto, Co.',country:'Germany',city:'Frankfurt',creditLimit:59700,rep:'Andy Fixter'},
+  {id:129,name:'Mini Wheels Co.',country:'USA',city:'San Francisco',creditLimit:64600,rep:'Foon Yue Tseng'},
+  {id:131,name:'Land of Toys Inc.',country:'USA',city:'NYC',creditLimit:84300,rep:'Foon Yue Tseng'},
+  {id:141,name:'Euro+ Shopping Channel',country:'Spain',city:'Madrid',creditLimit:227600,rep:'Pamela Castillo'},
+  {id:145,name:'Danish Wholesale Imports',country:'Denmark',city:'Kobenhavn',creditLimit:83400,rep:'Larry Bott'},
+  {id:146,name:'Saveley & Henriot, Co.',country:'France',city:'Lyon',creditLimit:123900,rep:'Gerard Hernandez'},
+  {id:148,name:'Dragon Souveniers, Ltd.',country:'Singapore',city:'Singapore',creditLimit:103800,rep:'Leslie Jennings'},
+  {id:151,name:'Muscle Machine Inc',country:'USA',city:'NYC',creditLimit:138500,rep:'Foon Yue Tseng'},
+  {id:157,name:'Diecast Classics Inc.',country:'USA',city:'Allentown',creditLimit:100600,rep:'Julie Firrelli'},
+  {id:161,name:'Technics Stores Inc.',country:'USA',city:'Burlingame',creditLimit:84600,rep:'Julie Firrelli'},
+  {id:166,name:'Handji Gifts& Co',country:'Singapore',city:'Singapore',creditLimit:97900,rep:'Leslie Jennings'},
+  {id:167,name:'Herkku Gifts',country:'Finland',city:'Oulu',creditLimit:96800,rep:'Gerard Hernandez'},
+  {id:168,name:'American Souvenirs Inc',country:'USA',city:'New Haven',creditLimit:0,rep:'Foon Yue Tseng'},
+  {id:171,name:'Daedalus Designs Imports',country:'USA',city:'Miami',creditLimit:82900,rep:'Foon Yue Tseng'},
+  {id:172,name:"La Corne D'abondance, Co.",country:'France',city:'Paris',creditLimit:84300,rep:'Gerard Hernandez'},
+  {id:173,name:'Cambridge Collectables Co.',country:'USA',city:'Cambridge',creditLimit:43400,rep:'Julie Firrelli'},
+  {id:175,name:'Gift Depot Inc.',country:'USA',city:'Bridgewater',creditLimit:84300,rep:'Pamela Castillo'},
+  {id:177,name:'Osaka Souveniers Co.',country:'Japan',city:'Osaka',creditLimit:81200,rep:'Mami Nishi'},
+];
+
+const PRODUCTS=[
+  {code:'S18_1749',name:'1917 Grand Touring Sedan',line:'Vintage Cars',buyPrice:86.7,msrp:170,stock:2724},
+  {code:'S18_2248',name:'1911 Ford Town Car',line:'Vintage Cars',buyPrice:33.3,msrp:60,stock:540},
+  {code:'S18_4409',name:'1932 Alfa Romeo 8C2300 Spider Sport',line:'Vintage Cars',buyPrice:43.26,msrp:92,stock:6553},
+  {code:'S24_3969',name:'1936 Mercedes Benz 500k Roadster',line:'Vintage Cars',buyPrice:41.03,msrp:93,stock:2081},
+  {code:'S10_1678',name:'1969 Harley Davidson Ultimate Chopper',line:'Motorcycles',buyPrice:48.81,msrp:95,stock:7933},
+  {code:'S10_1949',name:'1952 Alpine Renault 1300',line:'Classic Cars',buyPrice:98.58,msrp:214,stock:7305},
+  {code:'S10_2016',name:'1996 Moto Guzzi 1100i',line:'Motorcycles',buyPrice:68.99,msrp:118,stock:6625},
+  {code:'S10_4698',name:'2003 Harley-Davidson Eagle Drag Bike',line:'Motorcycles',buyPrice:91.02,msrp:193,stock:5582},
+  {code:'S10_4757',name:'1972 Alfa Romeo GTA',line:'Classic Cars',buyPrice:85.68,msrp:136,stock:3252},
+  {code:'S10_4962',name:'1962 LanciaA Delta 16V',line:'Classic Cars',buyPrice:103.42,msrp:147,stock:6791},
+  {code:'S12_1099',name:'1968 Ford Mustang',line:'Classic Cars',buyPrice:95.34,msrp:194,stock:68},
+  {code:'S12_1108',name:'2001 Ferrari Enzo',line:'Classic Cars',buyPrice:95.59,msrp:207,stock:3619},
+  {code:'S12_3148',name:'1969 Corvette Convertible',line:'Classic Cars',buyPrice:69.93,msrp:143,stock:1249},
+  {code:'S12_3891',name:'1969 Ford Falcon',line:'Classic Cars',buyPrice:83.05,msrp:173,stock:1049},
+  {code:'S18_1129',name:'1993 Mazda RX-7',line:'Classic Cars',buyPrice:83.51,msrp:142,stock:3975},
+  {code:'S18_1342',name:'1937 Lincoln Berline',line:'Vintage Cars',buyPrice:60.62,msrp:103,stock:8693},
+  {code:'S18_1367',name:'1936 Mercedes-Benz 500 SEC',line:'Vintage Cars',buyPrice:72.56,msrp:132,stock:8901},
+  {code:'S18_1589',name:'1965 Aston Martin DB5',line:'Classic Cars',buyPrice:65.96,msrp:124,stock:9042},
+  {code:'S18_1984',name:'1995 Honda Civic',line:'Classic Cars',buyPrice:93.89,msrp:142,stock:9772},
+  {code:'S18_2319',name:'1964 Mercedes Tour Bus',line:'Trucks and Buses',buyPrice:74.86,msrp:122,stock:8258},
+  {code:'S18_2949',name:'1913 Ford Model T Speedster',line:'Vintage Cars',buyPrice:60.78,msrp:101,stock:6756},
+  {code:'S18_2957',name:'1934 Ford V8 Coupe',line:'Vintage Cars',buyPrice:34.35,msrp:62,stock:5649},
+  {code:'S18_3136',name:'18th Century Vintage Horse Carriage',line:'Vintage Cars',buyPrice:60.74,msrp:102,stock:5992},
+  {code:'S18_3140',name:'1903 Ford Model A',line:'Vintage Cars',buyPrice:68.3,msrp:136,stock:3913},
+  {code:'S18_3232',name:'1992 Ferrari 360 Spider red',line:'Classic Cars',buyPrice:77.9,msrp:169,stock:8347},
+  {code:'S24_1046',name:'1970 Chevy Chevelle SS 454',line:'Classic Cars',buyPrice:49.24,msrp:73,stock:1005},
+  {code:'S24_2011',name:'18th century schooner',line:'Ships',buyPrice:82.34,msrp:122,stock:1898},
+  {code:'S32_1374',name:'1997 BMW R 1100 S',line:'Motorcycles',buyPrice:60.1,msrp:109,stock:7000},
+  {code:'S50_1341',name:'1930 Buick Marquette Phaeton',line:'Vintage Cars',buyPrice:27.06,msrp:44,stock:7062},
+  {code:'S72_1253',name:'Boeing X-32A JSF',line:'Planes',buyPrice:32.77,msrp:49,stock:4857},
+];
+
+const MONTHS=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function rnd(a,b){return Math.floor(Math.random()*(b-a+1))+a;}
+function fmt(n){return '$'+n.toLocaleString();}
+
+const ORDERS=[];
+const ORDERDETAILS=[];
+let oid=10100;
+// Use seeded-like deterministic generation for consistency
+Math.seedrandom=function(seed){let s=seed;return function(){s=(s*16807+0)%2147483647;return(s-1)/2147483646;};};
+const rng=Math.seedrandom?Math.seedrandom(42):Math.random;
+function srnd(a,b,r){return Math.floor((r||Math.random)()*(b-a+1))+a;}
+
+CUSTOMERS.forEach((c,ci)=>{
+  const numOrds=srnd(3,15);
+  for(let i=0;i<numOrds;i++){
+    const yr=srnd(2003,2005);
+    const mo=srnd(0,11);
+    const dy=srnd(1,28);
+    const statuses=['Shipped','Shipped','Shipped','Shipped','Processing','On Hold','Cancelled','Resolved'];
+    const st=statuses[srnd(0,statuses.length-1)];
+    ORDERS.push({id:oid,customerId:c.id,customerName:c.name,country:c.country,date:`${yr}-${String(mo+1).padStart(2,'0')}-${String(dy).padStart(2,'0')}`,year:yr,month:mo,status:st});
+    const numProds=srnd(2,6);
+    let added=new Set();
+    for(let j=0;j<numProds;j++){
+      const p=PRODUCTS[srnd(0,PRODUCTS.length-1)];
+      if(added.has(p.code))continue;
+      added.add(p.code);
+      const qty=srnd(20,120);
+      const price=+(p.msrp*(0.7+Math.random()*0.2)).toFixed(2);
+      ORDERDETAILS.push({orderId:oid,productCode:p.code,productName:p.name,productLine:p.line,qty,price,total:+(qty*price).toFixed(2)});
+    }
+    oid++;
+  }
+});
+
+function getRevByOrder(){
+  const rev={};
+  ORDERDETAILS.forEach(d=>{rev[d.orderId]=(rev[d.orderId]||0)+d.total;});
+  return rev;
+}
+const revByOrder=getRevByOrder();
+
+const totalRev=Object.values(revByOrder).reduce((a,b)=>a+b,0);
+document.getElementById('kpi-rev').textContent=fmt(Math.round(totalRev));
+document.getElementById('kpi-ord').textContent=ORDERS.length;
+document.getElementById('kpi-cus').textContent=CUSTOMERS.length;
+document.getElementById('kpi-pro').textContent=PRODUCTS.length;
+
+function buildCharts(){
+  const monthlyRev=Array(12).fill(0);
+  ORDERS.filter(o=>o.year===2004&&o.status==='Shipped').forEach(o=>{
+    monthlyRev[o.month]+=(revByOrder[o.id]||0);
+  });
+  new Chart(document.getElementById('chart-monthly'),{
+    type:'bar',data:{labels:MONTHS,datasets:[{label:'Doanh thu',data:monthlyRev.map(v=>Math.round(v)),backgroundColor:'rgba(79,124,255,0.7)',borderRadius:4}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5c6285',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5c6285',font:{size:10},callback:v=>'$'+Math.round(v/1000)+'k'}}}}
+  });
+  const plineRev={};
+  ORDERDETAILS.forEach(d=>{plineRev[d.productLine]=(plineRev[d.productLine]||0)+d.total;});
+  const plKeys=Object.keys(plineRev).sort((a,b)=>plineRev[b]-plineRev[a]);
+  const plColors=['#4f7cff','#2ee8a0','#ffb84d','#ff5c7a','#7c5cff','#00d4ff','#ff8c42'];
+  new Chart(document.getElementById('chart-pline'),{
+    type:'doughnut',data:{labels:plKeys,datasets:[{data:plKeys.map(k=>Math.round(plineRev[k])),backgroundColor:plColors,borderWidth:0,hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{color:'#9aa0bc',font:{size:10},boxWidth:10,padding:8}}}}
+  });
+  const custRev={};
+  ORDERS.forEach(o=>{custRev[o.customerName]=(custRev[o.customerName]||0)+(revByOrder[o.id]||0);});
+  const topCusts=Object.entries(custRev).sort((a,b)=>b[1]-a[1]).slice(0,8);
+  new Chart(document.getElementById('chart-topcust'),{
+    type:'bar',data:{labels:topCusts.map(c=>c[0].substring(0,18)),datasets:[{label:'Revenue',data:topCusts.map(c=>Math.round(c[1])),backgroundColor:'rgba(124,92,255,0.75)',borderRadius:3}]},
+    options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5c6285',font:{size:9},callback:v=>'$'+Math.round(v/1000)+'k'}},y:{grid:{display:false},ticks:{color:'#9aa0bc',font:{size:9}}}}}
+  });
+  const statusCount={};
+  ORDERS.forEach(o=>{statusCount[o.status]=(statusCount[o.status]||0)+1;});
+  const sKeys=Object.keys(statusCount);
+  const sColors={'Shipped':'#2ee8a0','Processing':'#4f7cff','On Hold':'#ffb84d','Cancelled':'#ff5c7a','Resolved':'#7c5cff'};
+  new Chart(document.getElementById('chart-status'),{
+    type:'pie',data:{labels:sKeys,datasets:[{data:sKeys.map(k=>statusCount[k]),backgroundColor:sKeys.map(k=>sColors[k]||'#888'),borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'right',labels:{color:'#9aa0bc',font:{size:10},boxWidth:10,padding:6}}}}
+  });
+}
+setTimeout(buildCharts,100);
+
+const countries=[...new Set(CUSTOMERS.map(c=>c.country))].sort();
+const sel=document.getElementById('search-country');
+countries.forEach(c=>{const o=document.createElement('option');o.value=c;o.textContent=c;sel.appendChild(o);});
+
+let currentPage=1,pageSize=12,currentResults=[];
+function runSearch(){
+  const q=document.getElementById('search-input').value.toLowerCase();
+  const type=document.getElementById('search-type').value;
+  const country=document.getElementById('search-country').value;
+  let results=[];
+  if(type==='customers'||type==='all'){
+    let custs=CUSTOMERS.filter(c=>(c.name.toLowerCase().includes(q)||c.city.toLowerCase().includes(q)||c.rep.toLowerCase().includes(q))&&(!country||c.country===country));
+    custs.forEach(c=>{const orders=ORDERS.filter(o=>o.customerId===c.id);const rev=orders.reduce((a,o)=>a+(revByOrder[o.id]||0),0);results.push({type:'customer',id:c.id,name:c.name,detail:c.city+', '+c.country,sub:c.rep,val:Math.round(rev),status:'',extra:orders.length+' đơn'});});
+  }
+  if(type==='orders'||type==='all'){
+    let ords=ORDERS.filter(o=>(o.customerName.toLowerCase().includes(q)||String(o.id).includes(q))&&(!country||o.country===country));
+    ords.slice(0,60).forEach(o=>{results.push({type:'order',id:o.id,name:'#'+o.id+' — '+o.customerName,detail:o.date,sub:o.country,val:Math.round(revByOrder[o.id]||0),status:o.status,extra:''});});
+  }
+  if(type==='products'||type==='all'){
+    let prods=PRODUCTS.filter(p=>p.name.toLowerCase().includes(q)||p.line.toLowerCase().includes(q));
+    prods.forEach(p=>{results.push({type:'product',id:p.code,name:p.name,detail:p.line,sub:'Tồn: '+p.stock,val:p.msrp,status:'',extra:'Buy: $'+p.buyPrice});});
+  }
+  currentResults=results;currentPage=1;renderTable();
+}
+function renderTable(){
+  const total=currentResults.length;const start=(currentPage-1)*pageSize;const page=currentResults.slice(start,start+pageSize);
+  document.getElementById('search-results-info').textContent=`Tìm thấy ${total} kết quả`;
+  const typeColor={customer:'blue',order:'green',product:'amber'};
+  document.getElementById('search-head').innerHTML='<tr><th>Loại</th><th>Tên</th><th>Chi tiết</th><th>Thông tin</th><th style="text-align:right">Giá trị</th><th>Trạng thái</th></tr>';
+  document.getElementById('search-body').innerHTML=page.map(r=>`<tr><td><span class="badge ${typeColor[r.type]||'blue'}">${r.type}</span></td><td style="max-width:180px;overflow:hidden;text-overflow:ellipsis">${r.name}</td><td style="color:var(--text2)">${r.detail}</td><td style="color:var(--text3)">${r.sub}</td><td style="text-align:right;font-family:var(--mono)">$${r.val.toLocaleString()}</td><td>${r.status?`<span class="badge ${r.status==='Shipped'?'green':r.status==='Cancelled'?'red':'amber'}">${r.status}</span>`:r.extra}</td></tr>`).join('');
+  const totalPages=Math.ceil(total/pageSize)||1;
+  document.getElementById('page-info').textContent=`Trang ${currentPage}/${totalPages}`;
+  document.getElementById('prev-btn').disabled=currentPage<=1;
+  document.getElementById('next-btn').disabled=currentPage>=totalPages;
+}
+function changePage(d){currentPage+=d;renderTable();}
+runSearch();
+
+let statTab='time',statChart1=null,statChart2=null;
+function setStatTab(tab,btn){
+  statTab=tab;
+  document.querySelectorAll('.chart-tab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  renderStats();
+}
+
+function renderStats(){
+  const yr=document.getElementById('stat-year').value;
+  const metric=document.getElementById('stat-metric').value;
+  let orders=ORDERS.filter(o=>yr==='all'||o.year==yr);
+
+  function getVal(ordIds){
+    if(metric==='revenue')return Math.round(ordIds.reduce((a,id)=>a+(revByOrder[id]||0),0));
+    if(metric==='quantity')return ORDERDETAILS.filter(d=>ordIds.includes(d.orderId)).reduce((a,d)=>a+d.qty,0);
+    return ordIds.length;
+  }
+  const metricLabel=metric==='revenue'?'Doanh thu ($)':metric==='quantity'?'Số lượng':'Số đơn';
+
+  let labels1=[],data1=[],labels2=[],data2=[];
+  let tableHead='',tableRows=[];
+
+  if(statTab==='time'){
+    document.getElementById('stat-chart1-title').textContent='Doanh thu theo tháng';
+    document.getElementById('stat-chart2-title').textContent='Tích lũy theo tháng';
+    labels1=MONTHS;
+    data1=MONTHS.map((_,i)=>getVal(orders.filter(o=>o.month===i).map(o=>o.id)));
+    let cum=0;data2=data1.map(v=>{cum+=v;return cum;});
+    labels2=MONTHS;
+    tableHead='<tr><th>Tháng</th><th>'+metricLabel+'</th><th>Tích lũy</th><th>% tổng</th></tr>';
+    const tot=data1.reduce((a,b)=>a+b,0);
+    tableRows=data1.map((v,i)=>`<tr><td>${MONTHS[i]}</td><td style="font-family:var(--mono)">${v.toLocaleString()}</td><td style="font-family:var(--mono)">${data2[i].toLocaleString()}</td><td style="color:var(--text3)">${tot?((v/tot)*100).toFixed(1):0}%</td></tr>`);
+  } else if(statTab==='customer'){
+    document.getElementById('stat-chart1-title').textContent='Top 10 khách hàng';
+    document.getElementById('stat-chart2-title').textContent='Phân bổ theo quốc gia';
+    const cm={};ORDERS.forEach(o=>{cm[o.customerName]=(cm[o.customerName]||[]).concat(o.id);});
+    const topC=Object.entries(cm).map(([n,ids])=>({n,v:getVal(ids)})).sort((a,b)=>b.v-a.v).slice(0,10);
+    labels1=topC.map(c=>c.n.substring(0,14));data1=topC.map(c=>c.v);
+    const cm2={};ORDERS.forEach(o=>{cm2[o.country]=(cm2[o.country]||[]).concat(o.id);});
+    const topCo=Object.entries(cm2).map(([n,ids])=>({n,v:getVal(ids)})).sort((a,b)=>b.v-a.v).slice(0,8);
+    labels2=topCo.map(c=>c.n);data2=topCo.map(c=>c.v);
+    tableHead='<tr><th>Khách hàng</th><th>'+metricLabel+'</th><th>Số đơn</th></tr>';
+    tableRows=topC.map(c=>{const ords=ORDERS.filter(o=>o.customerName===c.n);return`<tr><td>${c.n}</td><td style="font-family:var(--mono)">${c.v.toLocaleString()}</td><td style="color:var(--text3)">${ords.length}</td></tr>`;});
+  } else if(statTab==='product'){
+    document.getElementById('stat-chart1-title').textContent='Top 10 sản phẩm';
+    document.getElementById('stat-chart2-title').textContent='Theo dòng sản phẩm';
+    const orderIds=new Set(orders.map(o=>o.id));
+    const pm={};ORDERDETAILS.filter(d=>orderIds.has(d.orderId)).forEach(d=>{pm[d.productName]=pm[d.productName]||{ids:new Set(),qty:0,rev:0};pm[d.productName].ids.add(d.orderId);pm[d.productName].qty+=d.qty;pm[d.productName].rev+=d.total;});
+    const topP=Object.entries(pm).map(([n,v])=>({n,v:metric==='revenue'?Math.round(v.rev):metric==='quantity'?v.qty:v.ids.size})).sort((a,b)=>b.v-a.v).slice(0,10);
+    labels1=topP.map(p=>p.n.substring(0,16));data1=topP.map(p=>p.v);
+    const lm={};ORDERDETAILS.filter(d=>orderIds.has(d.orderId)).forEach(d=>{lm[d.productLine]=lm[d.productLine]||{rev:0,qty:0,ids:new Set()};lm[d.productLine].rev+=d.total;lm[d.productLine].qty+=d.qty;lm[d.productLine].ids.add(d.orderId);});
+    const plData=Object.entries(lm).map(([n,v])=>({n,v:metric==='revenue'?Math.round(v.rev):metric==='quantity'?v.qty:v.ids.size})).sort((a,b)=>b.v-a.v);
+    labels2=plData.map(p=>p.n);data2=plData.map(p=>p.v);
+    tableHead='<tr><th>Sản phẩm</th><th>'+metricLabel+'</th></tr>';
+    tableRows=topP.map(p=>`<tr><td>${p.n}</td><td style="font-family:var(--mono)">${p.v.toLocaleString()}</td></tr>`);
+  } else {
+    document.getElementById('stat-chart1-title').textContent='Doanh thu theo quốc gia';
+    document.getElementById('stat-chart2-title').textContent='Số đơn hàng theo quốc gia';
+    const cm={};ORDERS.forEach(o=>{cm[o.country]=(cm[o.country]||[]).concat(o.id);});
+    const topCo=Object.entries(cm).map(([n,ids])=>({n,v:getVal(ids),cnt:ids.length})).sort((a,b)=>b.v-a.v).slice(0,12);
+    labels1=topCo.map(c=>c.n);data1=topCo.map(c=>c.v);
+    labels2=topCo.map(c=>c.n);data2=topCo.map(c=>c.cnt);
+    tableHead='<tr><th>Quốc gia</th><th>'+metricLabel+'</th><th>Số đơn</th></tr>';
+    tableRows=topCo.map(c=>`<tr><td>${c.n}</td><td style="font-family:var(--mono)">${c.v.toLocaleString()}</td><td style="color:var(--text3)">${c.cnt}</td></tr>`);
+  }
+
+  if(statChart1){statChart1.destroy();}
+  if(statChart2){statChart2.destroy();}
+  const cols1=data1.map((_,i)=>`hsl(${220+i*12},75%,60%)`);
+  statChart1=new Chart(document.getElementById('stat-chart1'),{
+    type:statTab==='time'?'line':'bar',
+    data:{labels:labels1,datasets:[{label:metricLabel,data:data1,backgroundColor:statTab==='time'?'rgba(79,124,255,0.3)':cols1,borderColor:'#4f7cff',borderWidth:statTab==='time'?2:0,fill:statTab==='time',tension:0.4,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5c6285',font:{size:9},maxRotation:45}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5c6285',font:{size:9}}}}}
+  });
+  const cols2=data2.map((_,i)=>`hsl(${160+i*14},65%,55%)`);
+  statChart2=new Chart(document.getElementById('stat-chart2'),{
+    type:statTab==='time'?'line':'bar',
+    data:{labels:labels2,datasets:[{label:'',data:data2,backgroundColor:statTab==='time'?'rgba(46,232,160,0.3)':cols2,borderColor:'#2ee8a0',borderWidth:statTab==='time'?2:0,fill:statTab==='time',tension:0.4,borderRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5c6285',font:{size:9},maxRotation:45}},y:{grid:{color:'rgba(255,255,255,.04)'},ticks:{color:'#5c6285',font:{size:9}}}}}
+  });
+  document.getElementById('stat-table-head').innerHTML=tableHead;
+  document.getElementById('stat-table-body').innerHTML=tableRows.join('');
+}
+
+function renderPivot(){
+  const rowDim=document.getElementById('pivot-row').value;
+  const colDim=document.getElementById('pivot-col').value;
+  const valDim=document.getElementById('pivot-val').value;
+  if(rowDim===colDim){alert('Hàng và cột không được trùng nhau!');return;}
+
+  function getDim(order,dim){
+    if(dim==='year')return String(order.year);
+    if(dim==='country')return order.country;
+    if(dim==='status')return order.status;
+    return null;
+  }
+  function getPlineDim(orderId){
+    const lines=new Set(ORDERDETAILS.filter(d=>d.orderId===orderId).map(d=>d.productLine));
+    return [...lines];
+  }
+
+  const rowVals=new Set(),colVals=new Set();
+  const data={};
+  const rowTotals={},colTotals={};
+  let grandTotal=0;
+
+  ORDERS.forEach(o=>{
+    const rv=getDim(o,rowDim);
+    const cv=getDim(o,colDim);
+    const plinesRow=rowDim==='productLine'?getPlineDim(o.id):null;
+    const plinesCol=colDim==='productLine'?getPlineDim(o.id):null;
+    const rows=plinesRow||[rv];
+    const cols=plinesCol||[cv];
+    rows.forEach(r=>{
+      if(!r)return;
+      rowVals.add(r);
+      cols.forEach(c=>{
+        if(!c)return;
+        colVals.add(c);
+        const key=r+'|||'+c;
+        let val=0;
+        if(valDim==='revenue'){val=revByOrder[o.id]||0;}
+        else if(valDim==='quantity'){val=ORDERDETAILS.filter(d=>d.orderId===o.id).reduce((a,d)=>a+d.qty,0);}
+        else{val=1;}
+        data[key]=(data[key]||0)+val;
+        rowTotals[r]=(rowTotals[r]||0)+val;
+        colTotals[c]=(colTotals[c]||0)+val;
+        grandTotal+=val;
+      });
+    });
+  });
+
+  const rows=[...rowVals].sort();const cols=[...colVals].sort();
+  function fmtV(v){if(!v)return '<span style="color:var(--text3)">—</span>';if(valDim==='revenue')return '$'+Math.round(v).toLocaleString();return Math.round(v).toLocaleString();}
+
+  let html='<table><thead><tr><th>'+rowDim+'</th>'+cols.map(c=>`<th class="col-head" style="text-align:right">${c}</th>`).join('')+'<th style="text-align:right;color:var(--amber)">TỔNG</th></tr></thead><tbody>';
+  rows.forEach(r=>{
+    html+='<tr><td style="font-weight:500">'+r+'</td>';
+    cols.forEach(c=>{const v=data[r+'|||'+c]||0;html+=`<td style="text-align:right;font-family:var(--mono);font-size:11px">${fmtV(v)}</td>`;});
+    html+=`<td class="pivot-total" style="text-align:right;font-size:12px">${fmtV(rowTotals[r]||0)}</td></tr>`;
+  });
+  html+='<tr style="border-top:2px solid var(--border2)"><td style="color:var(--amber);font-weight:600">TỔNG</td>'+cols.map(c=>`<td style="text-align:right;font-family:var(--mono);font-size:11px;color:var(--amber)">${fmtV(colTotals[c]||0)}</td>`).join('')+`<td class="pivot-total" style="text-align:right">${fmtV(grandTotal)}</td></tr>`;
+  html+='</tbody></table>';
+  document.getElementById('pivot-container').innerHTML=html;
+}
+
+function exportPivot(){
+  const rows=document.querySelectorAll('#pivot-container table tr');
+  let csv='';
+  rows.forEach(r=>{const cells=[...r.querySelectorAll('th,td')];csv+=cells.map(c=>'"'+c.textContent.trim()+'"').join(',')+'\n';});
+  const a=document.createElement('a');a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);a.download='classicmodels_pivot.csv';a.click();
+}
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='stats')setTimeout(renderStats,50);
+  if(id==='pivot')setTimeout(renderPivot,50);
+}
+
+const chatMsgs=[{role:'user',content:`Bạn là trợ lý phân tích dữ liệu ClassicModels. Cơ sở dữ liệu có ${CUSTOMERS.length} khách hàng từ ${[...new Set(CUSTOMERS.map(c=>c.country))].length} quốc gia, ${ORDERS.length} đơn hàng, ${PRODUCTS.length} sản phẩm thuộc 7 dòng hàng (Classic Cars, Motorcycles, Vintage Cars, Trucks and Buses, Ships, Planes). Tổng doanh thu ước tính khoảng $${Math.round(totalRev).toLocaleString()}. Trả lời bằng tiếng Việt, ngắn gọn, phân tích chuyên sâu, đưa ra số liệu cụ thể từ dữ liệu đã cung cấp.`}];
+
+async function sendChat(){
+  const input=document.getElementById('chat-input');
+  const text=input.value.trim();if(!text)return;
+  input.value='';
+  addMsg('user',text);
+  chatMsgs.push({role:'user',content:text});
+  const typing=addMsg('assistant','<span class="typing-dot"></span><span class="typing-dot"></span><span class="typing-dot"></span>');
+  try{
+    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:'Bạn là trợ lý phân tích ClassicModels. Trả lời ngắn gọn bằng tiếng Việt, tập trung số liệu.',messages:chatMsgs.slice(1)})});
+    const d=await r.json();
+    const reply=d.content?.[0]?.text||'Xin lỗi, tôi không thể trả lời lúc này.';
+    typing.querySelector('.msg-bubble').textContent=reply;
+    chatMsgs.push({role:'assistant',content:reply});
+  }catch(e){typing.querySelector('.msg-bubble').textContent='Lỗi kết nối. Vui lòng thử lại.';}
+}
+function quickChat(t){document.getElementById('chat-input').value=t;sendChat();}
+function addMsg(role,html){
+  const div=document.createElement('div');
+  div.className='msg '+role;
+  div.innerHTML=`<div class="msg-avatar">${role==='user'?'U':'AI'}</div><div class="msg-bubble">${html}</div>`;
+  const container=document.getElementById('chat-messages');
+  container.appendChild(div);
+  container.scrollTop=container.scrollHeight;
+  return div;
+}
+</script>
+</body>
+</html>
